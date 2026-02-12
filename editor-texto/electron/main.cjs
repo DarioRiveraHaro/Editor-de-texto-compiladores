@@ -2,12 +2,13 @@ const { app, BrowserWindow, ipcMain, dialog, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
-let mainWindow; // La guardamos globalmente para usarla en el menú
+let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    title: "Editor de Texto - Sin título",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
     },
@@ -15,11 +16,19 @@ function createWindow() {
 
   mainWindow.loadURL("http://localhost:5173");
 
-  // 1. Definir el menú
   const template = [
     {
-      label: "File", // O 'Archivo'
+      label: "File",
       submenu: [
+        {
+          label: "Nuevo",
+          accelerator: "CmdOrCtrl+N",
+          click: () => {
+            mainWindow.setTitle("Editor de Texto - Sin título");
+
+            mainWindow.webContents.send("new-file");
+          },
+        },
         {
           label: "Abrir",
           accelerator: "CmdOrCtrl+O",
@@ -27,7 +36,11 @@ function createWindow() {
             const { canceled, filePaths } = await dialog.showOpenDialog();
             if (!canceled) {
               const content = fs.readFileSync(filePaths[0], "utf8");
-              // Enviamos el contenido a React
+              const filePath = filePaths[0];
+              const fileName = path.basename(filePath);
+
+              mainWindow.setTitle(`Editor de Texto - ${fileName}`);
+
               mainWindow.webContents.send("file-opened", content);
             }
           },
@@ -36,7 +49,6 @@ function createWindow() {
           label: "Guardar",
           accelerator: "CmdOrCtrl+S",
           click: () => {
-            // Le pedimos a React que nos mande el texto actual para guardarlo
             mainWindow.webContents.send("request-save");
           },
         },
@@ -44,7 +56,7 @@ function createWindow() {
         { label: "Salir", role: "quit" },
       ],
     },
-    { label: "Edit", role: "editMenu" }, // Opciones estándar como copiar/pegar
+    { label: "Edit", role: "editMenu" },
     { label: "View", role: "viewMenu" },
   ];
 
@@ -52,11 +64,12 @@ function createWindow() {
   Menu.setApplicationMenu(menu);
 }
 
-// Handler para cuando React responde al "request-save"
 ipcMain.on("send-content-to-save", async (event, content) => {
   const { canceled, filePath } = await dialog.showSaveDialog();
   if (!canceled) {
     fs.writeFileSync(filePath, content);
+    const fileName = path.basename(filePath);
+    mainWindow.setTitle(`Editor de Texto - ${fileName}`);
   }
 });
 
