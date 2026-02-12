@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "./components/ui/button";
 
 function App() {
   const [content, setContent] = useState("");
@@ -16,8 +17,8 @@ function App() {
   return (
     <div style={{ padding: "20px" }}>
       <h1>Mi Editor Simple</h1>
-      <button onClick={handleOpen}>Abrir Archivo</button>
-      <button onClick={handleSave}>Guardar Como</button>
+      <Button onClick={handleOpen}>Abrir Archivo</Button>
+      <Button onClick={handleSave}>Guardar Como</Button>
       <br />
       <br />
       <textarea
